@@ -62,9 +62,9 @@ stats.showPanel(0);
     /*材质*/
     const material = [
         new THREE.MeshLambertMaterial({color: 0xE03636, transparent: true, opacity: 0.95}),
-        new THREE.MeshLambertMaterial({color: 0xEDD0BE, transparent: true, opacity: 0.95}),
+        new THREE.MeshLambertMaterial({color: 0xFF7340, transparent: true, opacity: 0.95}),
         new THREE.MeshLambertMaterial({color: 0xFF534D, transparent: true, opacity: 0.95}),
-        new THREE.MeshLambertMaterial({color: 0xF6D6FF, transparent: true, opacity: 0.95}),
+        new THREE.MeshLambertMaterial({color: 0xD861C9, transparent: true, opacity: 0.95}),
         new THREE.MeshLambertMaterial({color: 0x25C6FC, transparent: true, opacity: 0.95}),
         new THREE.MeshLambertMaterial({color: 0xEAF048, transparent: true, opacity: 0.95}),
         new THREE.MeshLambertMaterial({color: 0x9FF048, transparent: true, opacity: 0.95}),
@@ -262,11 +262,17 @@ stats.showPanel(0);
                     overlap();
 
                 if (isoverlap === true) {
-                    tetromino = next_tetromino;
+                    tetromino = new T(parseInt(config.width / 2),config.height,next_tetromino.shape);
                     for (let i in tetromino.cube_items) {
                         scene.add(tetromino.cube_items[i]);
                     }
-                    next_tetromino = new T(parseInt(config.width / 2), config.height, Math.floor(Math.random() * 7))
+                    for(let i in next_tetromino.cube_items){
+                        scene.remove(next_tetromino.cube_items[i])
+                    }
+                    next_tetromino = new T(config.width+5, config.height-4, Math.floor(Math.random() * 7));
+                    for(let i in next_tetromino.cube_items){
+                        scene.add(next_tetromino.cube_items[i]);
+                    }
                 } else {
                     for (let i in this.cube_items) {
                         this.cube_items[i].position.y -= cube_size
@@ -370,13 +376,13 @@ stats.showPanel(0);
         const frames_m = new THREE.MeshLambertMaterial({color: 0xB7B7B7, transparent: true, opacity: 1});
         const frames = [];
         frames["left"] = new THREE.Mesh(frames_height_g, frames_m);
-        frames["left"].position.set(-cube_size, (config.height - 1) / 2 * cube_size, 0);
+        frames["left"].position.set(-cube_size, (config.height - 1) / 2 * cube_size, 1);
         frames["right"] = new THREE.Mesh(frames_height_g, frames_m);
-        frames["right"].position.set((config.width - 1) * cube_size + cube_size, (config.height - 1) / 2 * cube_size, 0);
+        frames["right"].position.set((config.width - 1) * cube_size + cube_size, (config.height - 1) / 2 * cube_size, 1);
         frames["top"] = new THREE.Mesh(frames_width_g, frames_m);
-        frames["top"].position.set((config.width - 1) * cube_size / 2, config.height * cube_size, 0);
+        frames["top"].position.set((config.width - 1) * cube_size / 2, config.height * cube_size, 1);
         frames["bottom"] = new THREE.Mesh(frames_width_g, frames_m);
-        frames["bottom"].position.set((config.width - 1) * cube_size / 2, -cube_size, 0);
+        frames["bottom"].position.set((config.width - 1) * cube_size / 2, -cube_size, 1);
         for (let i in frames) {
             scene.add(frames[i])
         }
@@ -391,6 +397,7 @@ stats.showPanel(0);
         /*第一次载入方块*/
         for (let i in tetromino.cube_items) {
             scene.add(tetromino.cube_items[i]);
+            scene.add(next_tetromino.cube_items[i]);
         }
         /*键盘监听*/
         window.onkeydown = (e) => {
@@ -429,7 +436,7 @@ stats.showPanel(0);
     };
 
     let tetromino = new T(parseInt(config.width / 2), config.height, Math.floor(Math.random() * 7));
-    let next_tetromino = new T(parseInt(config.width / 2), config.height, Math.floor(Math.random() * 7));
+    let next_tetromino = new T(config.width+5, config.height-4, Math.floor(Math.random() * 7));
     let isoverlap;
     /*消除一行*/
     const line_clear = () => {
@@ -501,7 +508,9 @@ stats.showPanel(0);
     const gameover = () => {
         for (let i in stacking[config.height - 1]) {
             if (stacking[config.height - 1][i].cube != null) {
+                alert("总分:"+data.score);
                 restart();
+                /*弹出gameover*/
                 break;
             }
         }
