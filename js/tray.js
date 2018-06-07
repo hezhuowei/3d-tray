@@ -12,8 +12,25 @@ stats.showPanel(0);
     const config = {
         "width": 10,
         "height": 20,
-        "cube_size": 10
+        "cube_size": 10,
+        "font_size": 10,
+        "font_height": 1
     };
+
+    const data = {
+        "lines": 0,
+        "score": 0,
+        "level": 1,
+
+    };
+    const data_UI={
+        "lines": null,
+        "score": null,
+        "level": null,
+    };
+    let font;
+    const font_size = config.font_size;
+    const font_height = config.font_height;
     const cube_size = config.cube_size;
     const canvas_width = document.getElementById('tray-canvas').clientWidth;
     const canvas_height = document.getElementById('tray-canvas').clientHeight;
@@ -27,8 +44,8 @@ stats.showPanel(0);
         1,
         5000
     );
-    camera.position.set(parseInt(config.width / 2) * cube_size, parseInt(config.height/2)*cube_size, 300);
-    camera.lookAt(parseInt(config.width / 2) * cube_size, parseInt(config.height/2)*cube_size, 0);
+    camera.position.set(parseInt(config.width / 2) * cube_size, parseInt(config.height / 2) * cube_size, 300);
+    camera.lookAt(parseInt(config.width / 2) * cube_size, parseInt(config.height / 2) * cube_size, 0);
     /*定义渲染器*/
     const renderer = new THREE.WebGLRenderer(
         {
@@ -72,8 +89,103 @@ stats.showPanel(0);
     ambient.intensity = 0.5;
 
 
-    scene.add(plane, spotlight, ambient);
+    /*3d文字*/
+    const font_loader = new THREE.FontLoader();
+    font_loader.load(
+        './js/droid_sans_bold.typeface.json',
+        (response) => {
+            /*文字next*/
+            font = response;
+            const next_txt_g = new THREE.TextGeometry('NEXT', {
+                "font": font,
+                "size": font_size,
+                "height": font_height,
+                "bevelEnabled": true,
+                "bevelSize": 1
+            });
+            const next_text_material = new THREE.MeshLambertMaterial({color: 0x67e667});
+            const next = new THREE.Mesh(next_txt_g, next_text_material);
+            next.position.set((config.width + 2) * cube_size, (config.height - 1) * cube_size, 0);
 
+
+
+            /*文字lines*/
+            const lines_txt_g = new THREE.TextGeometry('LINES', {
+                "font": font,
+                "size": font_size,
+                "height": font_height,
+                "bevelEnabled": true,
+                "bevelSize": 1
+            });
+            const lines_txt_material = new THREE.MeshLambertMaterial({color: 0x62e660});
+            const lines = new THREE.Mesh(lines_txt_g, lines_txt_material);
+            lines.position.set((config.width + 2) * cube_size, (config.height - 9) * cube_size, 0);
+
+
+            /*文字score*/
+            const score_txt_g = new THREE.TextGeometry('SCORE', {
+                "font": font,
+                "size": font_size,
+                "height": font_height,
+                "bevelEnabled": true,
+                "bevelSize": 1
+            });
+            const score_txt_material = new THREE.MeshLambertMaterial({color: 0x62e660});
+            const score = new THREE.Mesh(score_txt_g, score_txt_material);
+            score.position.set((config.width + 2) * cube_size, (config.height - 12) * cube_size, 0);
+            /*文字level*/
+            const level_txt_g = new THREE.TextGeometry('LEVEL', {
+                "font": font,
+                "size": font_size,
+                "height": font_height,
+                "bevelEnabled": true,
+                "bevelSize": 1
+            });
+            const level_txt_material = new THREE.MeshLambertMaterial({color: 0x62e660});
+            const level = new THREE.Mesh(level_txt_g, level_txt_material);
+            level.position.set((config.width + 2) * cube_size, (config.height - 15) * cube_size, 0);
+
+            /*数字*/
+            const number_material=new THREE.MeshLambertMaterial({color:0x39e639});
+            for (let i in data_UI){
+                const tmp_g=new THREE.TextGeometry(data[i],{
+                    "font":font,
+                    "size":font_size,
+                    "height":font_height,
+                    "bevelEnabled": true,
+                    "bevelSize": 1
+                });
+                data_UI[i]=new THREE.Mesh(tmp_g,number_material);
+            }
+            const data_UI_x=(config.width+7)*cube_size;
+            data_UI.lines.position.set(data_UI_x,lines.position.y,0);
+            data_UI.score.position.set(data_UI_x,score.position.y,0);
+            data_UI.level.position.set(data_UI_x,level.position.y,0);
+            scene.add(next, lines, score, level,data_UI.level,data_UI.lines,data_UI.score);
+        }
+    );
+
+    const UI_update=()=>{
+        const number_material=new THREE.MeshLambertMaterial({color:0x39e639});
+        for(let i in data_UI){
+            const tmp_g=new THREE.TextGeometry(data[i],{
+                "font":font,
+                "size":font_size,
+                "height":font_height,
+                "bevelEnabled": true,
+                "bevelSize": 1
+            });
+            const x=data_UI[i].position.x;
+            const y=data_UI[i].position.y;
+            scene.remove(data_UI[i]);
+            data_UI[i]=new THREE.Mesh(tmp_g,number_material);
+            data_UI[i].position.set(x,y,0);
+            scene.add(data_UI[i]);
+
+
+        }
+    };
+    scene.add(/*plane,*/ spotlight, ambient);
     class T {
         constructor(x, y, shape) {
             this.shape = shape;
@@ -143,6 +255,7 @@ stats.showPanel(0);
         }
 
         down() {
+
             if (!is_paused) {
 
                 if (tetromino.cube_items)
@@ -246,26 +359,25 @@ stats.showPanel(0);
     }
 
     let stacking = [];
-    /*游戏逻辑*/
     let is_paused = false;
-    let next,level,lines;
+
     /*初始化*/
     const init = () => {
 
         /*游戏边框*/
         const frames_width_g = new THREE.BoxGeometry(config.width * cube_size, cube_size, cube_size);
-        const frames_height_g = new THREE.BoxGeometry(cube_size, config.height * cube_size + 2*cube_size, cube_size);
-        const frames_m =new THREE.MeshLambertMaterial({color: 0xB7B7B7, transparent: true, opacity: 1});
+        const frames_height_g = new THREE.BoxGeometry(cube_size, config.height * cube_size + 2 * cube_size, cube_size);
+        const frames_m = new THREE.MeshLambertMaterial({color: 0xB7B7B7, transparent: true, opacity: 1});
         const frames = [];
         frames["left"] = new THREE.Mesh(frames_height_g, frames_m);
-        frames["left"].position.set(-cube_size,(config.height-1)/2*cube_size,0);
+        frames["left"].position.set(-cube_size, (config.height - 1) / 2 * cube_size, 0);
         frames["right"] = new THREE.Mesh(frames_height_g, frames_m);
-        frames["right"].position.set((config.width-1)*cube_size+cube_size,(config.height-1)/2*cube_size,0);
+        frames["right"].position.set((config.width - 1) * cube_size + cube_size, (config.height - 1) / 2 * cube_size, 0);
         frames["top"] = new THREE.Mesh(frames_width_g, frames_m);
-        frames["top"].position.set((config.width-1)*cube_size/2,config.height*cube_size,0);
+        frames["top"].position.set((config.width - 1) * cube_size / 2, config.height * cube_size, 0);
         frames["bottom"] = new THREE.Mesh(frames_width_g, frames_m);
-        frames["bottom"].position.set((config.width-1)*cube_size/2,-cube_size,0);
-        for (let i in frames){
+        frames["bottom"].position.set((config.width - 1) * cube_size / 2, -cube_size, 0);
+        for (let i in frames) {
             scene.add(frames[i])
         }
 
@@ -306,21 +418,22 @@ stats.showPanel(0);
                     is_paused = !is_paused;
                     break;
                 case" ":
-                    while (!isoverlap){
+                    while (!isoverlap) {
                         tetromino.down();
                     }
+                    break;
                 default:
                     break;
             }
         }
     };
 
-
     let tetromino = new T(parseInt(config.width / 2), config.height, Math.floor(Math.random() * 7));
     let next_tetromino = new T(parseInt(config.width / 2), config.height, Math.floor(Math.random() * 7));
     let isoverlap;
     /*消除一行*/
     const line_clear = () => {
+        let lines_at_once = 0;
         for (let y = 0; y < stacking.length; y++) {
             /*判断一行是否存在空白*/
             let without_gaps = true;
@@ -330,6 +443,8 @@ stats.showPanel(0);
                 }
             }
             if (without_gaps) {
+                data.lines++;
+                lines_at_once++;
                 /*从场景移除这一行的所有方块*/
                 for (let x in stacking[y]) {
                     if (stacking[y][x].cube !== null) {
@@ -342,7 +457,6 @@ stats.showPanel(0);
                         if (stacking[iy][x].cube !== null) {
                             let old = stacking[iy][x].cube.position.y;
                             stacking[iy][x].cube.position.y -= cube_size;
-                            console.log(stacking[iy][x].cube.position.y + "," + old + "," + cube_size)
                         }
                     }
                 }
@@ -354,23 +468,49 @@ stats.showPanel(0);
                 }
                 stacking.push(new_line);
                 y--;
-
             }
         }
+        /*单次消除行数对应分数*/
+        let base_score=0;
+        switch (lines_at_once) {
+            case 1:
+                base_score = 40;
+                break;
+            case 2:
+                base_score=100;
+                break;
+            case 3:
+                base_score=300;
+                break;
+            case 4:
+                base_score=1200;
+                break;
+            default:
+                break;
+        }
+        data.score+=base_score*data.level;
+
+        /*判断升级*/
+        if(data.level*10<data.lines){
+            data.level++;
+        }
+        /*更新数字*/
+        UI_update();
+
     };
-    const gameover=()=>{
-        for(let i in stacking[config.height-1]){
-            if(stacking[config.height-1][i].cube!=null){
+    const gameover = () => {
+        for (let i in stacking[config.height - 1]) {
+            if (stacking[config.height - 1][i].cube != null) {
                 restart();
                 break;
             }
         }
     };
-    const restart=()=>{
+    const restart = () => {
         /*清楚场景方块*/
-        for(let y in stacking){
-            for (let x in stacking[y]){
-                if(stacking[y][x].cube!=null){
+        for (let y in stacking) {
+            for (let x in stacking[y]) {
+                if (stacking[y][x].cube != null) {
                     scene.remove(stacking[y][x].cube);
                 }
             }
@@ -382,6 +522,11 @@ stats.showPanel(0);
                 stacking[y][x] = {"cube": null,};
             }
         }
+        /*重置分数*/
+        data.lines =0;
+        data.score =0;
+        data.level =1;
+        UI_update();
     };
     /*碰撞检测*/
     const overlap = () => {
@@ -423,13 +568,12 @@ stats.showPanel(0);
                     }
                 }
             }
-
     };
 
     /*定时下落*/
     setInterval(() => {
         tetromino.down()
-    }, 50);
+    }, 500);
 
     /*渲染*/
     const render = () => {
