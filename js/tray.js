@@ -37,6 +37,7 @@ stats.showPanel(0);
 
     /*定义场景*/
     const scene = new THREE.Scene();
+    /*scene.fog=new THREE.Fog(0x000000,0.5,1000);*/
     /*镜头*/
     const camera = new THREE.PerspectiveCamera(
         50,
@@ -44,6 +45,10 @@ stats.showPanel(0);
         1,
         5000
     );
+    const orbit=new THREE.OrbitControls(camera);
+    orbit.autoRotate=true;
+    orbit.target=new THREE.Vector3(config.width/2*cube_size,config.height/2*cube_size,0);
+    orbit.enableKeys=false;
     camera.position.set(parseInt(config.width / 2) * cube_size, parseInt(config.height / 2) * cube_size, 300);
     camera.lookAt(parseInt(config.width / 2) * cube_size, parseInt(config.height / 2) * cube_size, 0);
     /*定义渲染器*/
@@ -76,7 +81,6 @@ stats.showPanel(0);
     plane.rotation.x = -0.5 * Math.PI;
     plane.position.y = -2 * cube_size;
     plane.receiveShadow = true;
-
     /*点光源*/
     const spotlight = new THREE.SpotLight(0xffffff, 2, 1000, 90, 1, 2);
     spotlight.castShadow = true;
@@ -500,6 +504,7 @@ stats.showPanel(0);
         /*判断升级*/
         if(data.level*10<data.lines){
             data.level++;
+            new_interval();
         }
         /*更新数字*/
         UI_update();
@@ -580,10 +585,15 @@ stats.showPanel(0);
     };
 
     /*定时下落*/
-    setInterval(() => {
+    let interval=setInterval(() => {
         tetromino.down()
-    }, 500);
-
+    }, 500-50*data.level);
+    const new_interval=()=>{
+        clearInterval(interval);
+        interval=setInterval(() => {
+            tetromino.down()
+        }, 500-50*data.level);
+    };
     /*渲染*/
     const render = () => {
         stats.begin();
@@ -591,7 +601,6 @@ stats.showPanel(0);
         stats.end();
         requestAnimationFrame(render)
     };
-
     init();
     requestAnimationFrame(render);
 }();
