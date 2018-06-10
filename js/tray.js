@@ -28,6 +28,7 @@ stats.showPanel(0);
         "score": null,
         "level": null,
     };
+    let is_gameover=false;
     let font;
     const font_size = config.font_size;
     const font_height = config.font_height;
@@ -66,13 +67,13 @@ stats.showPanel(0);
     const cube_geometry = new THREE.BoxGeometry(cube_size, cube_size, cube_size, 1, 1, 1);
     /*材质*/
     const material = [
-        new THREE.MeshLambertMaterial({color: 0xE03636, transparent: true, opacity: 0.95}),
-        new THREE.MeshLambertMaterial({color: 0xFF7340, transparent: true, opacity: 0.95}),
-        new THREE.MeshLambertMaterial({color: 0xFF534D, transparent: true, opacity: 0.95}),
-        new THREE.MeshLambertMaterial({color: 0xD861C9, transparent: true, opacity: 0.95}),
-        new THREE.MeshLambertMaterial({color: 0x25C6FC, transparent: true, opacity: 0.95}),
-        new THREE.MeshLambertMaterial({color: 0xEAF048, transparent: true, opacity: 0.95}),
-        new THREE.MeshLambertMaterial({color: 0x9FF048, transparent: true, opacity: 0.95}),
+        new THREE.MeshLambertMaterial({color: 0xE03636,emissive: 0xff0000, transparent: true, opacity: 0.9}),
+        new THREE.MeshLambertMaterial({color: 0xFF7340,emissive: 0xff0000, transparent: true, opacity: 0.9}),
+        new THREE.MeshLambertMaterial({color: 0xFF534D,emissive: 0xff0000, transparent: true, opacity: 0.9}),
+        new THREE.MeshLambertMaterial({color: 0xD861C9,emissive: 0xff00ff, transparent: true, opacity: 0.9}),
+        new THREE.MeshLambertMaterial({color: 0x25C6FC,emissive: 0x0000ff, transparent: true, opacity: 0.9}),
+        new THREE.MeshLambertMaterial({color: 0xEAF048,emissive: 0xffff00, transparent: true, opacity: 0.9}),
+        new THREE.MeshLambertMaterial({color: 0x9FF048,emissive: 0x00ff00, transparent: true, opacity: 0.9}),
     ];
     /*地板*/
     const plane_geometry = new THREE.PlaneGeometry(500, 500);
@@ -266,6 +267,7 @@ stats.showPanel(0);
                     overlap();
 
                 if (isoverlap === true) {
+
                     tetromino = new T(parseInt(config.width / 2),config.height,next_tetromino.shape);
                     for (let i in tetromino.cube_items) {
                         scene.add(tetromino.cube_items[i]);
@@ -277,6 +279,8 @@ stats.showPanel(0);
                     for(let i in next_tetromino.cube_items){
                         scene.add(next_tetromino.cube_items[i]);
                     }
+                    if(audio_collide.isPlaying){audio_collide.stop()};
+                    audio_collide.play();
                 } else {
                     for (let i in this.cube_items) {
                         this.cube_items[i].position.y -= cube_size
@@ -371,13 +375,33 @@ stats.showPanel(0);
     let stacking = [];
     let is_paused = false;
 
+    /*音乐*/
+    const listener=new THREE.AudioListener();
+    camera.add(listener);
+    const audio_collide=new THREE.Audio(listener);
+    const audioLoader=new THREE.AudioLoader();
+    audioLoader.load('assets/nugget_pickup.mp3',(buffer)=>{
+        audio_collide.setBuffer(buffer);
+        audio_collide.setVolume(0.5);
+    });
+
     /*初始化*/
     const init = () => {
+        const audio=new THREE.Audio(listener);
+
+        audioLoader.load('assets/ambiance_loop.mp3',(buffer)=>{
+            audio.setBuffer(buffer);
+            audio.setLoop(true);
+            audio.setVolume(0.5);
+            audio.play();
+        });
+
+
 
         /*游戏边框*/
         const frames_width_g = new THREE.BoxGeometry(config.width * cube_size, cube_size, cube_size);
         const frames_height_g = new THREE.BoxGeometry(cube_size, config.height * cube_size + 2 * cube_size, cube_size);
-        const frames_m = new THREE.MeshLambertMaterial({color: 0xB7B7B7, transparent: true, opacity: 1});
+        const frames_m = new THREE.MeshLambertMaterial({color: 0x000000,emissive: 0xdedede,});
         const frames = [];
         frames["left"] = new THREE.Mesh(frames_height_g, frames_m);
         frames["left"].position.set(-cube_size, (config.height - 1) / 2 * cube_size, 1);
@@ -541,6 +565,8 @@ stats.showPanel(0);
         data.score =0;
         data.level =1;
         UI_update();
+        /*重置下落速度*/
+        new_interval();
     };
     /*碰撞检测*/
     const overlap = () => {
@@ -585,15 +611,16 @@ stats.showPanel(0);
     };
 
     /*定时下落*/
-    let interval=setInterval(() => {
-        tetromino.down()
-    }, 500-50*data.level);
+    let interval;
     const new_interval=()=>{
         clearInterval(interval);
         interval=setInterval(() => {
-            tetromino.down()
+            if(!is_gameover){
+                tetromino.down()
+            }
         }, 500-50*data.level);
     };
+    new_interval();
     /*渲染*/
     const render = () => {
         stats.begin();
