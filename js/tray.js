@@ -46,11 +46,13 @@ stats.showPanel(0);
         1,
         5000
     );
+    camera.position.set(-(config.width-2)*cube_size, (config.height+2)*cube_size , 300);
     const orbit=new THREE.OrbitControls(camera);
     orbit.autoRotate=true;
     orbit.target=new THREE.Vector3(config.width/2*cube_size,config.height/2*cube_size,0);
     orbit.enableKeys=false;
-    camera.position.set(parseInt(config.width / 2) * cube_size, parseInt(config.height / 2) * cube_size, 300);
+
+
     camera.lookAt(parseInt(config.width / 2) * cube_size, parseInt(config.height / 2) * cube_size, 0);
     /*定义渲染器*/
     const renderer = new THREE.WebGLRenderer(
