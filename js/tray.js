@@ -532,7 +532,6 @@ stats.showPanel(0);
         }
         /*更新数字*/
         UI_update();
-
     };
     const gameover = () => {
         for (let i in stacking[config.height - 1]) {
@@ -545,7 +544,7 @@ stats.showPanel(0);
         }
     };
     const restart = () => {
-        /*清楚场景方块*/
+        /*清除场景方块*/
         for (let y in stacking) {
             for (let x in stacking[y]) {
                 if (stacking[y][x].cube != null) {
